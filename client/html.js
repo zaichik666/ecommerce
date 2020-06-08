@@ -1,6 +1,5 @@
 const Html = ({ body }) => {
-  return `
-  <!DOCTYPE html>
+  return `<!DOCTYPE html>
   <html>
     <head>
       <meta charset="UTF-8">

@@ -10,6 +10,26 @@ import cookieParser from 'cookie-parser'
 import config from './config'
 import Html from '../client/html'
 
+const { readFile } = require('fs').promises
+// const { readFile, writeFile, unlink } = require('fs').promises
+
+/*
+async function saveFunc(users) {
+  await writeFile(`${__dirname}/users.json`, JSON.stringify(users), { encoding: 'utf8' })
+}
+
+async function readFunc() {
+  const users = await readFile(`${__dirname}/users.json`, { encoding: 'utf8' })
+    .then((data) => JSON.parse(data))
+    .catch(async () => {
+      const { data } = await axios('https://jsonplaceholder.typicode.com/users')
+      await saveFunc(data)
+      return data
+    })
+  return users
+}
+*/
+
 const Root = () => ''
 
 try {
@@ -40,6 +60,13 @@ const middleware = [
 ]
 
 middleware.forEach((it) => server.use(it))
+
+server.get('/api/products', async (req, res) => {
+  const products = await readFile(`${__dirname}/items.json`, { encoding: 'utf8' })
+    .then((data) => ({status: 'ok', data: JSON.parse(data)} ))
+    .catch(() => ({status: 'error', message: `File not found`}))
+  res.json(products)
+})
 
 server.use('/api/', (req, res) => {
   res.status(404)
