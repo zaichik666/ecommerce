@@ -1,18 +1,38 @@
-import React, { useState } from 'react'
+import React, { useEffect } from 'react'
+import { Switch, Route } from 'react-router-dom'
+import { useSelector, useDispatch } from 'react-redux'
+import { getListData, getRates } from '../redux/reducers/product-list'
+import { getLogs } from '../redux/reducers/logs'
+
 import Head from './head'
-// import wave from '../assets/images/wave.jpg'
+import Header from './header'
+import Store from './store-page'
+import Basket from './basket'
 
 const Home = () => {
-  const [counter, setCounterNew] = useState(0)
+const logs = useSelector((s) => s.logs)
+
+  const dispatch = useDispatch()
+  useEffect(() => {
+    dispatch(getListData())
+  }, [])
+
+  useEffect(() => {
+    dispatch(getRates())
+  }, [])
+
+  useEffect(() => {
+    if (logs.length === 0) dispatch(getLogs())
+  })
 
   return (
     <div>
-      <Head title="Hello" />
-      <img alt="wave" src="images/wave.jpg" />
-      <button type="button" onClick={() => setCounterNew(counter + 1)}>
-        updateCounter
-      </button>
-      <div> Hello World Dashboard {counter} </div>
+      <Head title="Pop Shop" />
+      <Header />
+      <Switch>
+        <Route exact path="/" component={() => <Store />} />
+        <Route exact path="/basket" component={() => <Basket />} />
+      </Switch>
     </div>
   )
 }

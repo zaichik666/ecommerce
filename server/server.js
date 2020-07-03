@@ -5,30 +5,14 @@ import bodyParser from 'body-parser'
 import sockjs from 'sockjs'
 import { renderToStaticNodeStream } from 'react-dom/server'
 import React from 'react'
+import axios from 'axios'
 
 import cookieParser from 'cookie-parser'
 import config from './config'
 import Html from '../client/html'
 
-const { readFile } = require('fs').promises
-// const { readFile, writeFile, unlink } = require('fs').promises
-
-/*
-async function saveFunc(users) {
-  await writeFile(`${__dirname}/users.json`, JSON.stringify(users), { encoding: 'utf8' })
-}
-
-async function readFunc() {
-  const users = await readFile(`${__dirname}/users.json`, { encoding: 'utf8' })
-    .then((data) => JSON.parse(data))
-    .catch(async () => {
-      const { data } = await axios('https://jsonplaceholder.typicode.com/users')
-      await saveFunc(data)
-      return data
-    })
-  return users
-}
-*/
+const { readFile, writeFile, unlink } = require('fs').promises
+const products = require('./items.js')
 
 const Root = () => ''
 
@@ -61,11 +45,41 @@ const middleware = [
 
 middleware.forEach((it) => server.use(it))
 
-server.get('/api/products', async (req, res) => {
-  const products = await readFile(`${__dirname}/items.json`, { encoding: 'utf8' })
-    .then((data) => ({status: 'ok', data: JSON.parse(data)} ))
-    .catch(() => ({status: 'error', message: `File not found`}))
+server.get('/api/v1/logs', async (req, res) => {
+  const logs = await readFile(`${__dirname}/logs.json`, { encoding: 'utf8' })
+    .then((data) => JSON.parse(data))
+    .catch(() => {
+      writeFile(`${__dirname}/logs.json`, JSON.stringify([]), { encoding: 'utf8' })
+      return []
+    })
+  res.json(logs)
+})
+
+server.post('/api/v1/logs', async (req, res) => {
+  const log = req.body.data
+  const logs = await readFile(`${__dirname}/logs.json`, { encoding: 'utf8' })
+    .then((data) => JSON.parse(data))
+    .catch(() => [])
+  const now = new Date().toISOString()
+  const newLogs = [...logs, `${now} ${log}`]
+  await writeFile(`${__dirname}/logs.json`, JSON.stringify(newLogs), { encoding: 'utf8' })
+  res.json({ status: 'ok', data: `${log}` })
+})
+
+server.delete('/api/v1/logs', async (req, res) => {
+  unlink(`${__dirname}/logs.json`)
+  res.json({ status: 'ok' })
+})
+
+server.get('/api/v1/products', (req, res) => {
   res.json(products)
+})
+
+server.get('/api/v1/rates', async (req, res) => {
+  const rates = await axios('https://api.exchangeratesapi.io/latest?symbols=USD,CAD').then(
+    (result) => result.data.rates
+  )
+  res.json(rates)
 })
 
 server.use('/api/', (req, res) => {
